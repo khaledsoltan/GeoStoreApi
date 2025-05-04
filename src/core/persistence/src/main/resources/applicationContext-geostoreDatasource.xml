@@ -1,0 +1,132 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns:aop="http://www.springframework.org/schema/aop"
+        xmlns:tx="http://www.springframework.org/schema/tx"
+        xmlns:context="http://www.springframework.org/schema/context"
+        xmlns:util="http://www.springframework.org/schema/util"
+        xsi:schemaLocation="
+            http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-2.0.xsd
+            http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop-2.0.xsd
+            http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx-2.0.xsd
+            http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-2.5.xsd
+            http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util-2.5.xsd"
+    >
+
+    <!-- ====================================================================-->
+    <!-- Property config files -->
+    <!-- Any customization should go in the property file -->
+    <!-- ====================================================================-->
+
+   <bean class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer">
+        <property name="order" value="0"/>
+        <property name="locations">
+            <list>
+                <value>classpath:geostore.properties</value>
+                <value>classpath*:geostore.properties</value>
+            </list>
+        </property>
+        <property name="ignoreResourceNotFound" value="false"/>
+	</bean>
+	
+    <bean class="org.springframework.beans.factory.config.PropertyOverrideConfigurer">
+        <property name="ignoreResourceNotFound" value="true"/>
+        <property name="order" value="5"/>
+        <property name="locations">
+            <list>
+                <value>classpath*:geostore-datasource-ovr.properties</value>
+				<value>classpath*:${ovrdir}/geostore-datasource-ovr.properties</value>
+                <value>${geostore-ovr}</value>
+            </list>
+        </property>
+    </bean>
+
+<!--
+    <bean class="org.springframework.beans.factory.config.PropertyOverrideConfigurer">
+        <property name="location" value="file:${user.home}/georepo-datasource-ovr.properties"/>
+        <property name="ignoreResourceNotFound" value="True"/>
+    </bean>-->
+
+<!--    <bean class="org.springframework.beans.factory.config.PropertyOverrideConfigurer">
+        <property name="location" value="file:${georepo-datasource}"/>
+        <property name="ignoreResourceNotFound" value="True"/>
+    </bean>
+-->
+
+    <!-- ====================================================================-->
+
+    <bean id="geostoreDataSource" class="org.apache.commons.dbcp.BasicDataSource">
+        <property name="driverClassName" value="com.microsoft.sqlserver.jdbc.SQLServerDriver" />
+        <property name="url" value="jdbc:sqlserver://51.20.99.194:2010;databaseName=GISIDPortal;encrypt=true;trustServerCertificate=true" />
+        <property name="username" value="sa" />
+        <property name="password" value="Ss951753" />
+        <property name="initialSize" value="5" />
+        <property name="maxActive" value="10" />
+        <property name="maxIdle" value="5" />
+        <property name="minIdle" value="2" />
+        <property name="maxWait" value="5000" />
+    </bean>
+
+    <bean id="geostoreEntityManagerFactory"
+                class="org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean">
+        <property name="persistenceUnitName" value="geostore" />
+        <property name="persistenceXmlLocation" value="classpath:META-INF/geostore-persistence.xml" />
+        <property name="dataSource" ref="geostoreDataSource" />
+        <property name="loadTimeWeaver">
+            <bean class="org.springframework.instrument.classloading.InstrumentationLoadTimeWeaver" />
+        </property>
+        <property name="jpaVendorAdapter" ref="geostoreVendorAdapter" />
+        <property name="jpaPropertyMap">
+            <map>
+                <entry key="hibernate.cache.provider_class" value="org.hibernate.cache.EhCacheProvider"/>
+                <entry key="hibernate.cache.region.factory_class" value="org.hibernate.cache.ehcache.EhCacheRegionFactory"/>
+                <entry key="hibernate.cache.provider_configuration_file_resource_path" value="classpath:geostore-ehcache.xml"/>
+                <entry key="hibernate.cache.use_second_level_cache" value="true"/>
+                <entry key="hibernate.connection.autocommit" value="false"/>
+                <entry key="hibernate.generate_statistics" value="false"/>
+                <entry key="hibernate.default_schema" value="dbo"/>
+                <entry key="hibernate.default_catalog" value="GISIDPortal"/>
+                <entry key="hibernate.hbm2ddl.auto" value="create"/>
+                <entry key="hibernate.show_sql" value="true"/>
+                <entry key="hibernate.format_sql" value="true"/>
+                <entry key="hibernate.use_sql_comments" value="true"/>
+                <entry key="hibernate.globally_quoted_identifiers" value="false"/>
+                <entry key="hibernate.globally_quoted_identifiers_skip_column_definitions" value="true"/>
+                <entry key="hibernate.physical_naming_strategy" value="org.hibernate.boot.model.naming.PhysicalNamingStrategyStandardImpl"/>
+                <entry key="hibernate.implicit_naming_strategy" value="org.hibernate.boot.model.naming.ImplicitNamingStrategyLegacyJpaImpl"/>
+                <entry key="hibernate.dialect" value="org.hibernate.dialect.SQLServer2012Dialect"/>
+                <entry key="hibernate.jdbc.batch_size" value="30"/>
+                <entry key="hibernate.order_inserts" value="true"/>
+                <entry key="hibernate.order_updates" value="true"/>
+                <entry key="hibernate.jdbc.batch_versioned_data" value="true"/>
+                <entry key="hibernate.id.new_generator_mappings" value="false"/>
+                <entry key="hibernate.validator.apply_to_ddl" value="false"/>
+                <entry key="hibernate.validator.autoregister_listeners" value="false"/>
+                <entry key="hibernate.enable_lazy_load_no_trans" value="true"/>
+                <entry key="javax.persistence.schema-generation.database.action" value="create"/>
+                <entry key="hibernate.temp.use_jdbc_metadata_defaults" value="false"/>
+                <entry key="hibernate.schema_update.unique_constraint_strategy" value="RECREATE_QUIETLY"/>
+                <entry key="hibernate.schema_management.tool.schema-generation-connection" value="SEPARATE"/>
+                <entry key="hibernate.schema_management.tool.schema-validation" value="DISABLED"/>
+            </map>
+        </property>
+    </bean>
+
+    <bean id="geostoreVendorAdapter"
+                class="org.springframework.orm.jpa.vendor.HibernateJpaVendorAdapter">
+        <property name="databasePlatform" value="org.hibernate.dialect.SQLServer2012Dialect" />
+        <property name="showSql" value="true" />
+        <property name="generateDdl" value="true" />
+    </bean>
+
+    <bean id="geostoreTransactionManager" class="org.springframework.orm.jpa.JpaTransactionManager">
+        <property name="entityManagerFactory" ref="geostoreEntityManagerFactory" />
+    </bean>
+
+    <bean class="org.springframework.orm.jpa.support.PersistenceAnnotationBeanPostProcessor" />
+
+    <tx:annotation-driven />
+
+</beans>
+
+
